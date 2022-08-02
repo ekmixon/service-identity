@@ -119,11 +119,6 @@ def extract_ids(cert):
                             raise CertificateError(
                                 "Unexpected certificate content."
                             )
-                    else:  # pragma: nocover
-                        pass
-                else:  # pragma: nocover
-                    pass
-
     if not ids:
         # https://tools.ietf.org/search/rfc6125#section-6.4.4
         # A client MUST NOT seek a match for a reference identifier of CN-ID if

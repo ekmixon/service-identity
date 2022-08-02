@@ -169,7 +169,7 @@ class TestContainsInstance(object):
         """
         If the list does not contain an object of the type, return False.
         """
-        assert not _contains_instance_of([object(), list(), {}], tuple)
+        assert not _contains_instance_of([object(), [], {}], tuple)
 
 
 class TestDNS_ID(object):
@@ -678,7 +678,7 @@ class TestVerificationError(object):
             assert repr(e) == str(e)
             assert str(e) != ""
 
-    @pytest.mark.parametrize("proto", range(0, pickle.HIGHEST_PROTOCOL + 1))
+    @pytest.mark.parametrize("proto", range(pickle.HIGHEST_PROTOCOL + 1))
     @pytest.mark.parametrize(
         "exc",
         [

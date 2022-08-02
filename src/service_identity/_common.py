@@ -44,15 +44,16 @@ def verify_service_identity(cert_patterns, obligatory_ids, optional_ids):
     *obligatory_ids* must be both present and match.  *optional_ids* must match
     if a pattern of the respective type is present.
     """
-    errors = []
     matches = _find_matches(cert_patterns, obligatory_ids) + _find_matches(
         cert_patterns, optional_ids
     )
 
     matched_ids = [match.service_id for match in matches]
-    for i in obligatory_ids:
-        if i not in matched_ids:
-            errors.append(i.error_on_mismatch(mismatched_id=i))
+    errors = [
+        i.error_on_mismatch(mismatched_id=i)
+        for i in obligatory_ids
+        if i not in matched_ids
+    ]
 
     for i in optional_ids:
         # If an optional ID is not matched by a certificate pattern *but* there
@@ -84,9 +85,12 @@ def _find_matches(cert_patterns, service_ids):
     """
     matches = []
     for sid in service_ids:
-        for cid in cert_patterns:
-            if sid.verify(cid):
-                matches.append(ServiceMatch(cert_pattern=cid, service_id=sid))
+        matches.extend(
+            ServiceMatch(cert_pattern=cid, service_id=sid)
+            for cid in cert_patterns
+            if sid.verify(cid)
+        )
+
     return matches
 
 
@@ -97,10 +101,7 @@ def _contains_instance_of(seq, cl):
 
     :rtype: bool
     """
-    for e in seq:
-        if isinstance(e, cl):
-            return True
-    return False
+    return any(isinstance(e, cl) for e in seq)
 
 
 def _is_ip_address(pattern):
@@ -393,18 +394,17 @@ def _hostname_matches(cert_pattern, actual_hostname):
     :return: `True` if *cert_pattern* matches *actual_hostname*, else `False`.
     :rtype: `bool`
     """
-    if b"*" in cert_pattern:
-        cert_head, cert_tail = cert_pattern.split(b".", 1)
-        actual_head, actual_tail = actual_hostname.split(b".", 1)
-        if cert_tail != actual_tail:
-            return False
-        # No patterns for IDNA
-        if actual_head.startswith(b"xn--"):
-            return False
-
-        return cert_head == b"*" or cert_head == actual_head
-    else:
+    if b"*" not in cert_pattern:
         return cert_pattern == actual_hostname
+    cert_head, cert_tail = cert_pattern.split(b".", 1)
+    actual_head, actual_tail = actual_hostname.split(b".", 1)
+    if cert_tail != actual_tail:
+        return False
+    # No patterns for IDNA
+    if actual_head.startswith(b"xn--"):
+        return False
+
+    return cert_head in [b"*", actual_head]
 
 
 def _validate_pattern(cert_pattern):
